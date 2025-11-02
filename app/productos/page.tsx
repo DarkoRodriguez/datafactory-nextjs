@@ -1,15 +1,24 @@
-'use client'
-import React, { useMemo, useState } from "react";
+"use client"
+import React, { useMemo, useState, useEffect } from "react";
 import productos from "../../productos";
 import ProductCard from "../components/ProductCard";
 import CategoryFilter from "../components/CategoryFilter";
 import SortSelector from "../components/SortSelector";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../globals.css';
+import { useSearchParams } from 'next/navigation';
 
 export default function ProductosPage() {
-  const [categoria, setCategoria] = useState<string>("todos");
+  const searchParams = useSearchParams();
+  const initialCat = searchParams?.get('categoria') || 'todos';
+  const [categoria, setCategoria] = useState<string>(initialCat);
   const [orden, setOrden] = useState<string>("asc");
+
+  useEffect(() => {
+    // react to changes in the URL param if user navigates here with ?categoria=...
+    const cat = searchParams?.get('categoria');
+    if (cat) setCategoria(cat);
+  }, [searchParams]);
 
   const categorias = useMemo(() => {
     const cats = Array.from(new Set(productos.map((p) => p.categoria))).filter(Boolean) as string[];
@@ -39,7 +48,7 @@ export default function ProductosPage() {
       </div>
 
       {/* Grid de productos usando tu CSS */}
-      <div className="container">
+      <div className="product-grid">
         {productosFiltrados.map((producto) => (
           <ProductCard key={producto.id} producto={producto} />
         ))}
