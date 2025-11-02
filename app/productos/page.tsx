@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import React, { useMemo, useState, useEffect } from "react";
 import productos from "../../productos";
 import ProductCard from "../components/ProductCard";
