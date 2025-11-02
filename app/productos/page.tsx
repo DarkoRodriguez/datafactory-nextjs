@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, Suspense } from "react";
 import productos from "../../productos";
 import ProductCard from "../components/ProductCard";
 import CategoryFilter from "../components/CategoryFilter";
@@ -10,6 +10,14 @@ import '../globals.css';
 import { useSearchParams } from 'next/navigation';
 
 export default function ProductosPage() {
+  return (
+    <Suspense fallback={<div style={{padding: 40, textAlign: 'center'}}>Cargando productos...</div>}>
+      <ProductosPageContent />
+    </Suspense>
+  );
+}
+
+function ProductosPageContent() {
   const searchParams = useSearchParams();
   const initialCat = searchParams?.get('categoria') || 'todos';
   const [categoria, setCategoria] = useState<string>(initialCat);
