@@ -14,6 +14,7 @@ export default function CheckoutPage() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(true)
 
+
   // form state
   const [nombre, setNombre] = useState('')
   const [apellidos, setApellidos] = useState('')
@@ -23,6 +24,23 @@ export default function CheckoutPage() {
   const [region, setRegion] = useState('Región Metropolitana de Santiago')
   const [comuna, setComuna] = useState('Cerrillos')
   const [indicaciones, setIndicaciones] = useState('')
+
+  // Autocompletar datos si el usuario está logueado
+  useEffect(() => {
+    try {
+      const usuarioLogueado = JSON.parse(localStorage.getItem('usuarioLogueado') || 'null');
+      if (usuarioLogueado) {
+        setNombre(usuarioLogueado.nombre || '');
+        setApellidos(usuarioLogueado.apellidos || '');
+        setCorreo(usuarioLogueado.email || '');
+        setCalle(usuarioLogueado.calle || '');
+        setDepartamento(usuarioLogueado.departamento || '');
+        setRegion(usuarioLogueado.region || 'Región Metropolitana de Santiago');
+        setComuna(usuarioLogueado.comuna || 'Cerrillos');
+        setIndicaciones(usuarioLogueado.indicaciones || '');
+      }
+    } catch (e) {}
+  }, []);
 
   useEffect(() => {
     try {

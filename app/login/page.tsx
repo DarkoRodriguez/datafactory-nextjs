@@ -29,6 +29,9 @@ export default function InicioSesion() {
     }
 
     alert("Inicio de sesión exitoso");
+    try {
+      localStorage.setItem("usuarioLogueado", JSON.stringify(usuarioEncontrado));
+    } catch (e) {}
     console.log("Usuario logueado:", usuarioEncontrado);
   };
 
