@@ -1,0 +1,28 @@
+body{
+    margin: 0;
+    padding: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh;
+}
+
+.encabezado1{
+ text-align: center;
+    font-family: 'Arial', sans-serif;
+    color: #000000;
+    margin-top: 20;   /* espacio arriba del h1 */
+    margin-bottom: 0px;
+}
+
+.logo_empresa{
+display: block;
+    margin: 20px auto 15px auto; /* arriba, derecha, abajo, izquierda */
+    border-radius: 75px;
+}
+
+.h2_registro_usuario{
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 40px;
+}

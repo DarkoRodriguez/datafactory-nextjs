@@ -1,0 +1,56 @@
+body{
+    background-image: url("/images/nosotros/diseno-de-fondo-amarillo-splat.webp");
+     background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh;
+}
+
+.footer2{
+    text-align: end; margin: 40px;  font-family: 'copperplate', fantasy; font-weight:lighter ; 
+}
+.nosotros-section {
+  display: flex;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 120px auto 100px auto;
+  padding: 30px 20px;
+  min-width: 100px;
+  background: #fffbe6;
+  border-radius: 18px;
+  box-shadow: 10px 10px 5px rgb(219, 214, 134);
+}
+
+.nosotros-col.izq {
+  flex: 1 1 250px;
+  min-width: 220px;
+  max-width: 320px;
+  border-right: 2px solid #e6c15a;
+  padding-right: 30px;
+  
+}
+
+.nosotros-col.der {
+  flex: 2 1 400px;
+  min-width: 280px;
+  padding-left: 30px;
+}
+
+@media (max-width: 900px) {
+  .nosotros-section {
+    flex-direction: column;
+    gap: 20px;
+    padding: 18px 6px;
+  }
+  .nosotros-col.izq {
+    border-right: none;
+    border-bottom: 2px solid #e6c15a;
+    padding-right: 0;
+    padding-bottom: 18px;
+    max-width: 100%;
+  }
+  .nosotros-col.der {
+    padding-left: 0;
+    min-width: 0;
+  }
+}

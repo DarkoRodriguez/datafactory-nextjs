@@ -19,13 +19,13 @@ export default function Home() {
         <ul className="sesion" style={{ listStyle: 'none', display: 'inline-flex', gap: '8px', padding: 0, margin: 0 }}>
           <li>
             <Link href="/login">
-              <button className="btn btn-sm btn-outline-primary">Iniciar Sesión</button>
+              <button className="btn btn-sm btn-outline-warning">Iniciar Sesión</button>
             </Link>
           </li>
           <li><h5 style={{ margin: 0 }}>|</h5></li>
           <li>
             <Link href="/register">
-              <button className="btn btn-sm btn-outline-secondary">Registrar Usuario</button>
+              <button className="btn btn-sm btn-warning">Registrar Usuario</button>
             </Link>
           </li>
         </ul>
@@ -43,7 +43,7 @@ export default function Home() {
                       <p style={{ maxWidth: 520, fontWeight: 500, textAlign: 'center', margin: '0 auto' }}>Descubre descuentos especiales en libros y cursos de programación. ¡No te pierdas las mejores oportunidades para regalar y aprender!</p>
                     </div>
                     <div style={{ flex: '0 0 320px', textAlign: 'center', display: 'flex', alignItems: 'center', height: '100%' }}>
-                      <img src="/oferta-navidad.jpg" alt="Ofertas navideñas" style={{ maxWidth: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 8, margin: '0 auto' }} />
+                      <img src="/ofertas_navidad.jpg" alt="Ofertas navideñas" style={{ maxWidth: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 8, margin: '0 auto' }} />
                     </div>
                   </div>
                 </Link>
@@ -77,7 +77,7 @@ export default function Home() {
               <Link href="/productos" style={{ textDecoration: 'none' }}>
                 <Card className="h-100 clickable-card" style={{ width: 260, position: 'relative', overflow: 'hidden', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
                   <div style={{ height: 180, background: '#e3e3e3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <img src="/icono-todos.png" alt="Todos los productos" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+                    <img src="/libros.jpg" alt="Todos los productos" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
                   </div>
                   <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', background: 'rgba(255,255,255,0.92)', padding: '16px 0 10px 0', textAlign: 'center' }}>
                     <span style={{ fontWeight: 600, fontSize: 18 }}>Todos los productos</span>
@@ -114,11 +114,11 @@ export default function Home() {
           <div className="footer-left">
             <ul className="links" style={{ listStyle: 'none', padding: 0 }}>
               <h5>DATA FACTORY</h5>
-              <li><a href="#">Categoria X</a></li>
+              <li><a href="/nosotros">Nosotros</a></li>
               <li><h5>|</h5></li>
-              <li><a href="#">Categoria Y</a></li>
+              <li><a href="/blogs">Blogs</a></li>
               <li><h5>|</h5></li>
-              <li><a href="#">Categoria Z</a></li>
+              <li><a href="/contacto">Contacto</a></li>
             </ul>
             <div className="payment-icons" style={{ marginTop: 10 }}>
               <img src="https://img.icons8.com/color/48/000000/visa.png" alt="Visa" />

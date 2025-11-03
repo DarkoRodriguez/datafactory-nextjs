@@ -1,0 +1,21 @@
+body{
+    margin: 0;
+    padding: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh;
+}
+
+
+.h2_registro_usuario{
+    margin-top: 0px;
+    margin-bottom: 40px;
+    text-align: center; 
+}
+
+.logo_empresa{
+display: block;
+    margin: 20px auto 15px auto; /* arriba, derecha, abajo, izquierda */
+    border-radius: 75px;
+}

@@ -1,29 +1,106 @@
-"use client"
+"use client";
 
-import React from 'react'
-import Link from 'next/link'
+import "../../styles/inicioSesion.css";
+import { useState } from "react";
+import Image from "next/image";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
-export default function LoginPage() {
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    alert('Simulación: iniciar sesión (no funcional en este demo)')
-  }
+export default function InicioSesion() {
+  const [email, setEmail] = useState("");
+  const [contrasena, setContrasena] = useState("");
+  const [mostrarContrasena, setMostrarContrasena] = useState(false);
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const listaUsuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
+    const usuarioEncontrado = listaUsuarios.find((u: any) => u.email === email);
+
+    if (!usuarioEncontrado) {
+      alert("El correo no está registrado");
+      console.error("Correo no registrado");
+      return;
+    }
+
+    if (usuarioEncontrado.contrasena !== contrasena) {
+      alert("Contraseña incorrecta");
+      console.error("Contraseña incorrecta");
+      return;
+    }
+
+    alert("Inicio de sesión exitoso");
+    console.log("Usuario logueado:", usuarioEncontrado);
+  };
 
   return (
-    <main style={{ maxWidth: 720, margin: '40px auto', padding: 20 }}>
-      <h2>Iniciar Sesión</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <label>
-          Email
-          <input type="email" required style={{ width: '100%', padding: 8 }} />
-        </label>
-        <label>
-          Contraseña
-          <input type="password" required style={{ width: '100%', padding: 8 }} />
-        </label>
-        <button type="submit" style={{ padding: '8px 12px', borderRadius: 6 }}>Iniciar sesión</button>
-      </form>
-      <p style={{ marginTop: 12 }}>¿No tienes cuenta? <Link href="/register">Regístrate</Link></p>
+    <main>
+      {/* Logo */}
+      <Image
+        src="/logo_empresa.jpg"
+        width={150}
+        height={150}
+        alt="Logo"
+        className="logo_empresa"
+      />
+      <h1 className="encabezado1">DATA FACTORY</h1>
+
+      {/* Formulario */}
+      <section
+        className="section_registro_usuario mt-1"
+        style={{
+          backgroundColor: "#ffffffea",
+          maxWidth: "800px",
+          padding: "50px",
+          borderRadius: "7px",
+          width: "80%",
+          margin: "0 auto 40px auto",
+          color: "#000",
+        }}
+      >
+        <h2 className="h2_registro_usuario">Inicio Sesión</h2>
+
+        <form className="form_inicio_sesion" onSubmit={handleSubmit}>
+          {/* Email */}
+          <div className="correo mb-3">
+            <label className="form-label">Correo</label>
+            <input
+              type="text"
+              className="form-control"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <div className="form-text">Ingrese correo correctamente</div>
+          </div>
+
+          {/* Contraseña */}
+          <div className="contraseña mb-3">
+            <label className="form-label">Contraseña</label>
+            <input
+              type={mostrarContrasena ? "text" : "password"}
+              className="form-control"
+              value={contrasena}
+              onChange={(e) => setContrasena(e.target.value)}
+            />
+            <div className="form-check mt-2">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                checked={mostrarContrasena}
+                onChange={(e) => setMostrarContrasena(e.target.checked)}
+              />
+              <label className="form-check-label">Mostrar contraseña</label>
+            </div>
+          </div>
+
+          <button type="submit" className="btn btn-primary mt-3">
+            Iniciar Sesión
+          </button>
+
+          <p className="parrafo_registro_usuario mt-3">
+            ¿No tienes una cuenta? <a href="/register">Regístrate</a>
+          </p>
+        </form>
+      </section>
     </main>
-  )
+  );
 }
