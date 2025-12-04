@@ -1,9 +1,11 @@
 "use client"
 
 import React, { useEffect, useState } from 'react'
+import { fetchJSON, getSessionId } from '../lib/api'
 
 type CartItem = {
   id: number
+  productoId?: number
   nombre: string
   precio: number
   imagen?: string
@@ -27,19 +29,39 @@ export default function CheckoutPage() {
 
   // Autocompletar datos si el usuario está logueado
   useEffect(() => {
-    try {
-      const usuarioLogueado = JSON.parse(localStorage.getItem('usuarioLogueado') || 'null');
-      if (usuarioLogueado) {
-        setNombre(usuarioLogueado.nombre || '');
-        setApellidos(usuarioLogueado.apellidos || '');
-        setCorreo(usuarioLogueado.email || '');
-        setCalle(usuarioLogueado.calle || '');
-        setDepartamento(usuarioLogueado.departamento || '');
-        setRegion(usuarioLogueado.region || 'Región Metropolitana de Santiago');
-        setComuna(usuarioLogueado.comuna || 'Cerrillos');
-        setIndicaciones(usuarioLogueado.indicaciones || '');
-      }
-    } catch (e) {}
+    (async () => {
+      try {
+        const usuarioLocal = JSON.parse(localStorage.getItem('usuarioLogueado') || 'null');
+        if (usuarioLocal && usuarioLocal.id) {
+          try {
+            const u = await fetchJSON(`/usuarios/${usuarioLocal.id}`);
+            setNombre(u.nombre || '');
+            setApellidos(u.apellidos || '');
+            setCorreo(u.email || '');
+            setCalle(u.calle || '');
+            setDepartamento(u.departamento || '');
+            setRegion(u.region || 'Región Metropolitana de Santiago');
+            setComuna(u.comuna || 'Cerrillos');
+            setIndicaciones(u.indicaciones || '');
+            return;
+          } catch (e) {
+            // fallback to local
+          }
+        }
+        // fallback to stored user
+        const usuarioLogueado = usuarioLocal;
+        if (usuarioLogueado) {
+          setNombre(usuarioLogueado.nombre || '');
+          setApellidos(usuarioLogueado.apellidos || '');
+          setCorreo(usuarioLogueado.email || '');
+          setCalle(usuarioLogueado.calle || '');
+          setDepartamento(usuarioLogueado.departamento || '');
+          setRegion(usuarioLogueado.region || 'Región Metropolitana de Santiago');
+          setComuna(usuarioLogueado.comuna || 'Cerrillos');
+          setIndicaciones(usuarioLogueado.indicaciones || '');
+        }
+      } catch (e) { console.warn(e) }
+    })();
   }, []);
 
   useEffect(() => {
@@ -90,18 +112,61 @@ export default function CheckoutPage() {
       createdAt: new Date().toISOString(),
       estado: comunaValida ? 'success' : 'fail',
     };
-    try {
-      localStorage.setItem('lastOrder', JSON.stringify(order));
-      try { (window as any).lastOrder = order } catch (e) {}
-    } catch (e) {
-      console.error('Could not save order to localStorage', e);
-    }
-    if (comunaValida) {
+    (async () => {
       try {
-        localStorage.removeItem('cart');
-        window.dispatchEvent(new Event('cartUpdated'));
-      } catch (e) {}
-    }
+        // create order first
+        const usuarioLocal = JSON.parse(localStorage.getItem('usuarioLogueado') || 'null');
+        const orderPayload: any = {
+          usuarioId: usuarioLocal && usuarioLocal.id ? usuarioLocal.id : null,
+          numeroOrden: `ORDER-${Date.now()}`,
+          estado: comunaValida ? 'PENDIENTE' : 'PENDIENTE',
+          total,
+          nombreCompleto: nombre,
+          apellidos,
+          correo,
+          calle,
+          departamento,
+          region,
+          comuna,
+          indicaciones
+        };
+        const createdOrder = await fetchJSON('/orden', { method: 'POST', body: JSON.stringify(orderPayload) });
+        // create order items
+        for (const it of cart) {
+          const productoId = it.productoId || (it as any).producto?.id || (it as any).producto_id || it.id;
+          const itemPayload = {
+            orden_id: createdOrder.id,
+            producto_id: productoId,
+            nombre: it.nombre,
+            cantidad: it.qty,
+            precio_unitario: it.precio,
+            subtotal: (it.precio * (it.qty || 1))
+          };
+          try { await fetchJSON('/orden_item', { method: 'POST', body: JSON.stringify(itemPayload) }); } catch(e) { console.warn(e); }
+        }
+        // save last order client-side for debugging
+        try { localStorage.setItem('lastOrder', JSON.stringify({ ...createdOrder, items: cart })); } catch(e){}
+        if (comunaValida) {
+          try {
+            // clear carrito items on server and local
+            const usuarioId = usuarioLocal && usuarioLocal.id ? usuarioLocal.id : null;
+            const sid = getSessionId();
+            // fetch all carrito items then delete those that match
+            try {
+              const all = await fetchJSON('/carrito_item');
+              const toDelete = all.filter((ci:any) => (usuarioId && ci.usuario_id === usuarioId) || (!usuarioId && ci.sessionId === sid));
+              for (const d of toDelete) {
+                try { await fetchJSON(`/carrito_item/${d.id}`, { method: 'DELETE' }); } catch(e){}
+              }
+            } catch(e) { /* ignore */ }
+            localStorage.removeItem('cart');
+            window.dispatchEvent(new Event('cartUpdated'));
+          } catch (e) { console.warn(e) }
+        }
+      } catch (e) {
+        console.error('Could not create order', e)
+      }
+    })();
   }
 
   if (loading) return <div style={{ padding: 24 }}>Cargando...</div>;

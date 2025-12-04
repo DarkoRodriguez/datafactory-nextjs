@@ -4,6 +4,7 @@ import "../../styles/contacto.css";
 import { useState } from "react";
 import Image from "next/image";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { fetchJSON } from '../lib/api'
 
 export default function Contacto() {
   const [nombre, setNombre] = useState("");
@@ -68,6 +69,21 @@ export default function Contacto() {
     setNombre("");
     setEmail("");
     setMensaje("");
+    (async () => {
+      try {
+        // send to backend
+        await fetchJSON('/contacto', { method: 'POST', body: JSON.stringify({ nombre, email, mensaje }) });
+        console.log("Formulario enviado correctamente:", { nombre, email, mensaje });
+        alert("Formulario enviado correctamente");
+        // Reset del formulario
+        setNombre("");
+        setEmail("");
+        setMensaje("");
+      } catch (err) {
+        console.error('Error enviando formulario de contacto', err);
+        alert('No se pudo enviar el formulario. Intenta nuevamente más tarde.');
+      }
+    })();
   };
 
   return (

@@ -66,18 +66,11 @@ def llenar_formulario(driver, nombre, email, contrasena, confirmacion, telefono,
     input_confirmacion = driver.find_element(By.CSS_SELECTOR, ".confirmacion_contraseña input.form-control")
     input_telefono = driver.find_element(By.CSS_SELECTOR, ".telefono input")
     from selenium.webdriver.support.ui import Select
-    select_region = None
-    select_comuna = None
-    try:
-        element_region = driver.find_element(By.ID, "regionSelect")
-        select_region = Select(element_region)
-    except:
-        select_region = None
-    try:
-        element_comuna = driver.find_element(By.ID, "comunaSelect")
-        select_comuna = Select(element_comuna)
-    except:
-        select_comuna = None
+    select_region = Select(driver.find_element(By.CSS_SELECTOR, ".region select"))
+    select_region.select_by_value("metropolitana")
+    time.sleep(0.5)
+    select_comuna = Select(driver.find_element(By.CSS_SELECTOR, ".comuna select"))
+    select_comuna.select_by_value("Santiago")
     boton_registrar = driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
     # Limpiar y escribir datos
     limpiar_input(input_nombre, driver)
@@ -90,16 +83,19 @@ def llenar_formulario(driver, nombre, email, contrasena, confirmacion, telefono,
     escribir_lento(input_confirmacion, confirmacion)
     limpiar_input(input_telefono, driver)
     escribir_lento(input_telefono, telefono)
+    limpiar_input(select_region, driver)
+    limpiar_input(select_comuna, driver)
+    
     # Selección de región y comuna usando Select por texto visible
     if select_region and region:
         try:
-            select_region.select_by_visible_text(region)
+            select_region.select_by_value("metropolitana")
             time.sleep(0.5)
         except Exception as e:
             print(f"⚠️ No se pudo seleccionar región: {e}")
     if select_comuna and comuna:
         try:
-            select_comuna.select_by_visible_text(comuna)
+            select_comuna.select_by_value("Santiago")
             time.sleep(0.5)
         except Exception as e:
             print(f"⚠️ No se pudo seleccionar comuna: {e}")

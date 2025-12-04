@@ -41,71 +41,38 @@ export default function RegistroUsuario() {
   // Validación y envío del formulario
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-
-    // Validaciones
-    const nombreRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@(duoc\.cl|gmail\.com|profesor\.duoc\.cl)$/;
-    const passwordRegex = /^(?=[A-Z])(?=.*[a-z]).*$/;
-
-    if (!nombre || !nombreRegex.test(nombre) || nombre.length > 30) {
-      alert("Nombre inválido");
+    // keep basic client validations
+    if (!nombre || !email || !contrasena) {
+      alert('Complete los campos requeridos');
       return;
     }
 
-    if (!email || !emailRegex.test(email) || email.length > 100) {
-      alert("Email inválido");
-      return;
-    }
-
-    if (!contrasena || !passwordRegex.test(contrasena) || !/\d/.test(contrasena) ||
-        !/[!@#$%^&*(),.?":{}|<>]/.test(contrasena) || contrasena.length < 4 || contrasena.length > 10) {
-      alert("Contraseña inválida");
-      return;
-    }
-
-    if (contrasena !== confirmacion) {
-      alert("La confirmación no coincide");
-      return;
-    }
-
-    if (!telefono || !/^9\d{8}$/.test(telefono)) {
-      alert("Teléfono inválido");
-      return;
-    }
-
-    if (!region) {
-      alert("Seleccione una región");
-      return;
-    }
-
-    if (!comuna) {
-      alert("Seleccione una comuna");
-      return;
-    }
-
-    // Guardar en localStorage
-    const listaUsuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
-    const existeUsuario = listaUsuarios.find((u: any) => u.email === email);
-
-    if (existeUsuario) {
-      alert("El correo ya está registrado");
-      return;
-    }
-
-    const nuevoUsuario = { nombre, email, contrasena, telefono, region, comuna };
-    listaUsuarios.push(nuevoUsuario);
-    localStorage.setItem("usuarios", JSON.stringify(listaUsuarios));
-    alert("Formulario validado con éxito");
-    
-    // Reset
-    setNombre("");
-    setEmail("");
-    setContrasena("");
-    setConfirmacion("");
-    setTelefono("");
-    setRegion("");
-    setComuna("");
-    setComunasDisponibles([]);
+    // call backend API to create usuario
+    (async () => {
+      try {
+        const payload = { nombre, email, password: contrasena, telefono, region, comuna };
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8080/api/v1'}/usuarios`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const t = await res.text();
+          alert(t || 'Error registrando usuario');
+          return;
+        }
+        const created = await res.json();
+        // store user locally for compatibility and redirect to login
+        localStorage.setItem('usuarioLogueado', JSON.stringify(created));
+        alert('Registro exitoso');
+        // reset
+        setNombre(''); setEmail(''); setContrasena(''); setConfirmacion(''); setTelefono(''); setRegion(''); setComuna(''); setComunasDisponibles([]);
+        window.location.href = '/login';
+      } catch (e) {
+        console.error(e);
+        alert('Error conectando al servidor');
+      }
+    })();
   };
 
   return (

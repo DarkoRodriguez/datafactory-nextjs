@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRef } from 'react'
+import { fetchJSON, getSessionId } from '../lib/api'
 import { useRouter } from 'next/navigation'
 
 type CartItem = {
   id: number
+  productoId?: number
   nombre: string
   precio: number
   imagen?: string
@@ -16,13 +18,40 @@ export default function CartPage() {
   const [cart, setCart] = useState<CartItem[]>([])
 
   useEffect(() => {
-    const raw = localStorage.getItem('cart')
-    try {
-      const parsed = raw ? JSON.parse(raw) : []
-      setCart(Array.isArray(parsed) ? parsed : [])
-    } catch (e) {
-      setCart([])
+    async function loadCart() {
+      try {
+        const usuario = JSON.parse(localStorage.getItem('usuarioLogueado') || 'null');
+        let items: any[] = [];
+        try {
+          const all = await fetchJSON('/carrito_item');
+          if (usuario && usuario.id) {
+            const uid = usuario.id || Number(localStorage.getItem('usuarioId'));
+            // backend may return usuario_id or nested usuario object
+            items = all.filter((it: any) => (it.usuario_id && it.usuario_id === uid) || (it.usuario && it.usuario.id === uid));
+          } else {
+            const sid = getSessionId();
+            // backend may use sessionId or session_id
+            items = all.filter((it: any) => it.sessionId === sid || it.session_id === sid);
+          }
+        } catch (e) {
+          // fallback to localStorage
+          const raw = localStorage.getItem('cart')
+          const parsed = raw ? JSON.parse(raw) : []
+          items = Array.isArray(parsed) ? parsed : []
+        }
+        setCart(items.map((it: any) => ({
+          id: it.id,
+          productoId: it.producto?.id || it.producto_id || it.productoId || null,
+          nombre: it.nombre || it.producto?.nombre,
+          imagen: it.imagen || it.producto?.imagen,
+          precio: it.precio || it.producto?.precio,
+          qty: it.cantidad || it.qty
+        })));
+      } catch (e) {
+        setCart([])
+      }
     }
+    loadCart();
   }, [])
 
   useEffect(() => {
@@ -67,17 +96,22 @@ export default function CartPage() {
 
   function changeQty(idOrIndex: number, delta: number) {
     setCart((prev) => {
-      const copy = [...prev]
+      const copy: any[] = [...prev]
       // find by id first, fallback to index
       let idx = copy.findIndex((c) => c.id === idOrIndex)
       if (idx === -1) idx = idOrIndex
       if (!copy[idx]) return prev
-      copy[idx] = { ...copy[idx], qty: Math.max(1, (copy[idx].qty || 1) + delta) }
-      try {
-        localStorage.setItem('cart', JSON.stringify(copy))
-      } catch (e) {
-        console.error('Error saving cart:', e)
-      }
+      const newQty = Math.max(1, (copy[idx].qty || 1) + delta)
+      copy[idx] = { ...copy[idx], qty: newQty }
+      // sync to server if possible
+      (async () => {
+        try {
+          await fetchJSON(`/carrito_item/${copy[idx].id}`, { method: 'PUT', body: JSON.stringify({ cantidad: newQty }) });
+        } catch (e) {
+          console.warn('No se pudo actualizar carrito en servidor', e);
+          try { localStorage.setItem('cart', JSON.stringify(copy)) } catch(e){}
+        }
+      })();
       try { window.dispatchEvent(new Event('cartUpdated')) } catch (e) {}
       return copy
     })
@@ -85,18 +119,22 @@ export default function CartPage() {
 
   function removeFromCart(idOrIndex: number) {
     setCart((prev) => {
-      const copy = [...prev]
-      const idx = copy.findIndex((c) => c.id === idOrIndex)
+      if (!Array.isArray(prev)) return prev;
+      const copy: any[] = [...prev]
+      const idx = copy.findIndex((c) => c && c.id === idOrIndex)
       const removeIndex = idx >= 0 ? idx : idOrIndex
       if (removeIndex >= 0 && removeIndex < copy.length) {
-        copy.splice(removeIndex, 1)
-      }
-      try {
-        localStorage.setItem('cart', JSON.stringify(copy))
-      } catch (e) {
-        console.error('Error saving cart:', e)
+        let toRemove: any = null;
+        const removed = copy.splice(removeIndex, 1);
+        if (Array.isArray(removed) && removed.length > 0) toRemove = removed[0];
+        (async () => {
+          try {
+            if (toRemove && toRemove.id) await fetchJSON(`/carrito_item/${toRemove.id}`, { method: 'DELETE' });
+          } catch (e) { console.warn('No se pudo eliminar carrito en servidor', e); }
+        })();
       }
       try { window.dispatchEvent(new Event('cartUpdated')) } catch (e) {}
+      try { localStorage.setItem('cart', JSON.stringify(copy)); } catch(e) {}
       return copy
     })
   }

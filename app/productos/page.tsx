@@ -1,13 +1,14 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect, Suspense } from "react";
-import productos from "../../productos";
 import ProductCard from "../components/ProductCard";
 import CategoryFilter from "../components/CategoryFilter";
 import SortSelector from "../components/SortSelector";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../globals.css';
 import { useSearchParams } from 'next/navigation';
+import { fetchJSON } from "../lib/api";
 
 export default function ProductosPage() {
   return (
@@ -22,6 +23,9 @@ function ProductosPageContent() {
   const initialCat = searchParams?.get('categoria') || 'todos';
   const [categoria, setCategoria] = useState<string>(initialCat);
   const [orden, setOrden] = useState<string>("asc");
+  const [productos, setProductos] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // react to changes in the URL param if user navigates here with ?categoria=...
@@ -29,16 +33,35 @@ function ProductosPageContent() {
     if (cat) setCategoria(cat);
   }, [searchParams]);
 
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    setError(null);
+    fetchJSON('/producto')
+      .then((data: any) => {
+        if (!mounted) return;
+        if (Array.isArray(data)) setProductos(data as any[]);
+        else setProductos([]);
+      })
+      .catch((err) => {
+        console.warn('No se pudo cargar la lista de productos desde la API:', err);
+        setError('No se pudieron cargar los productos.');
+        setProductos([]);
+      })
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false };
+  }, []);
+
   const categorias = useMemo(() => {
     const cats = Array.from(new Set(productos.map((p) => p.categoria))).filter(Boolean) as string[];
     return ["todos", ...cats];
-  }, []);
+  }, [productos]);
 
   const productosFiltrados = useMemo(() => {
     let list = categoria === "todos" ? [...productos] : productos.filter(p => p.categoria === categoria);
     list.sort((a, b) => (orden === "asc" ? a.precio - b.precio : b.precio - a.precio));
     return list;
-  }, [categoria, orden]);
+  }, [categoria, orden, productos]);
 
   return (
     <div>
@@ -53,7 +76,13 @@ function ProductosPageContent() {
         <SortSelector value={orden} onChange={setOrden} />
       </div>
       <div style={{textAlign:'center'}}>
-        <span className="text-muted">Mostrando {productosFiltrados.length} productos</span>
+        {loading ? (
+          <span className="text-muted">Cargando productos...</span>
+        ) : error ? (
+          <span className="text-muted">{error}</span>
+        ) : (
+          <span className="text-muted">Mostrando {productosFiltrados.length} productos</span>
+        )}
       </div>
 
       {/* Grid de productos usando tu CSS */}

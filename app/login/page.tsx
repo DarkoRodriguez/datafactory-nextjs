@@ -12,27 +12,35 @@ export default function InicioSesion() {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-
-    const listaUsuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
-    const usuarioEncontrado = listaUsuarios.find((u: any) => u.email === email);
-
-    if (!usuarioEncontrado) {
-      alert("El correo no está registrado");
-      console.error("Correo no registrado");
-      return;
-    }
-
-    if (usuarioEncontrado.contrasena !== contrasena) {
-      alert("Contraseña incorrecta");
-      console.error("Contraseña incorrecta");
-      return;
-    }
-
-    alert("Inicio de sesión exitoso");
-    try {
-      localStorage.setItem("usuarioLogueado", JSON.stringify(usuarioEncontrado));
-    } catch (e) {}
-    console.log("Usuario logueado:", usuarioEncontrado);
+    // call backend to get users and match credentials
+    (async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8080/api/v1'}/usuarios`);
+        if (!res.ok) {
+          alert('Error al solicitar usuarios');
+          return;
+        }
+        const list = await res.json();
+        const usuarioEncontrado = list.find((u: any) => u.email === email);
+        if (!usuarioEncontrado) {
+          alert('El correo no está registrado');
+          return;
+        }
+        // backend stores password in 'password'
+        if (usuarioEncontrado.password !== contrasena && usuarioEncontrado.contrasena !== contrasena) {
+          alert('Contraseña incorrecta');
+          return;
+        }
+        // success: store usuarioLogueado (keep compatibility with frontend)
+        localStorage.setItem('usuarioLogueado', JSON.stringify(usuarioEncontrado));
+        // also store usuario id for API calls
+        localStorage.setItem('usuarioId', String(usuarioEncontrado.id));
+        alert('Inicio de sesión exitoso');
+      } catch (e) {
+        console.error(e);
+        alert('Error conectando al servidor');
+      }
+    })();
   };
 
   return (

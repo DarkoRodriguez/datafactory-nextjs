@@ -1,16 +1,32 @@
 "use client"
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
-import productos from "../productos";
 import { Container, Row, Col, Card, Button, Carousel } from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './globals.css';
+import { fetchJSON } from './lib/api';
+
+// Nota: ahora la página carga productos desde la API en lugar de `productos.js`
 
 export default function Home() {
+  const [productos, setProductos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchJSON('/producto')
+      .then((data: any) => { if (!mounted) return; setProductos(Array.isArray(data) ? data : []) })
+      .catch((err) => { console.warn(err); if (mounted) setError('No se pudieron cargar productos') })
+      .finally(() => { if (mounted) setLoading(false) });
+    return () => { mounted = false };
+  }, []);
+
   const categorias = useMemo(() => {
     const cats = Array.from(new Set(productos.map((p) => p.categoria))).filter(Boolean) as string[];
     return ["todos", ...cats];
-  }, []);
+  }, [productos]);
 
   return (
     <div>
@@ -48,7 +64,7 @@ export default function Home() {
                   </div>
                 </Link>
               </Carousel.Item>
-              {productos.slice(0, 6).map((p) => (
+              {productos.slice(0, 6).map((p: any) => (
                 <Carousel.Item key={p.id} style={{ height: 340 }}>
                   <Link href={`/productos/${p.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                     <div className="carousel-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', height: 340 }}>
@@ -88,7 +104,7 @@ export default function Home() {
 
             {categorias.filter(c => c !== 'todos').map((cat) => {
               // Buscar la primera imagen de la categoría
-              const imgCat = productos.find(p => p.categoria === cat)?.imagen || '/default-cat.png';
+              const imgCat = productos.find((p: any) => p.categoria === cat)?.imagen || '/default-cat.png';
               return (
                 <Col key={cat} className="d-flex justify-content-center">
                   <Link href={`/productos?categoria=${encodeURIComponent(cat)}`} style={{ textDecoration: 'none' }}>
