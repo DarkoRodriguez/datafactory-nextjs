@@ -131,44 +131,64 @@ export default function ProductDetailClient({ id }: { id: string }) {
         // include producto as nested object as well
         body.producto = { id: product.id };
 
-        const created = await fetchJSON('/carrito_item', { method: 'POST', body: JSON.stringify(body) });
-        // if backend returned the created carrito item with id, sync local cart with server state
+        // debug: log payload as JSON string before sending (safer to copy/paste)
         try {
-          const allServer = await fetchJSON('/carrito_item');
-          let serverItems: any[] = [];
-          if (usuario && usuario.id) {
-            const uid = usuario.id || Number(localStorage.getItem('usuarioId'));
-            serverItems = allServer.filter((it: any) => (it.usuario_id && it.usuario_id === uid) || (it.usuario && it.usuario.id === uid));
-          } else {
-            const sid = getSessionId();
-            serverItems = allServer.filter((it: any) => it.sessionId === sid || it.session_id === sid);
-          }
-          // map server items to local cart shape
-          const mapped = serverItems.map((it: any) => ({
-            id: it.id,
-            productoId: it.producto?.id || it.producto_id || it.productoId || it.productoId || null,
-            nombre: it.nombre || it.producto?.nombre,
-            imagen: it.imagen || it.producto?.imagen,
-            precio: it.precio || it.producto?.precio,
-            qty: it.cantidad || it.qty
-          }));
-          localStorage.setItem('cart', JSON.stringify(mapped));
-          try { window.dispatchEvent(new Event('cartUpdated')); } catch (e) {}
+          console.debug('POST /carrito_item payload (string):', JSON.stringify(body));
         } catch (e) {
-          // fallback: try to update the single item id locally
-          if (created && created.id) {
-            try {
-              const raw = localStorage.getItem('cart') || '[]';
-              const localCart = JSON.parse(raw);
-              const idx = localCart.findIndex((c: any) => c.id === item.id);
-              if (idx >= 0) {
-                localCart[idx].id = created.id;
-                localStorage.setItem('cart', JSON.stringify(localCart));
-                try { window.dispatchEvent(new Event('cartUpdated')); } catch (e) {}
-              }
-            } catch (e) {}
+          console.warn('Could not stringify carrito_item payload for debug', e);
+        }
+
+        // Guard: ensure we have a product id to send to backend. If missing, abort sync to avoid 500s.
+        if (!body.producto_id && !(body.producto && body.producto.id)) {
+          console.error('Aborting POST /carrito_item: missing producto_id in payload', body);
+        } else {
+          let created: any = null;
+          try {
+            created = await fetchJSON('/carrito_item', { method: 'POST', body: JSON.stringify(body) });
+          } catch (err: any) {
+            // fetchJSON throws Error(text) where text may be JSON; print it for debugging
+            console.error('Error creating carrito_item:', err?.message || err);
+            throw err; // rethrow so outer handler can continue
+          }
+          // if backend returned the created carrito item with id, sync local cart with server state
+          try {
+            const allServer = await fetchJSON('/carrito_item');
+            let serverItems: any[] = [];
+            if (usuario && usuario.id) {
+              const uid = usuario.id || Number(localStorage.getItem('usuarioId'));
+              serverItems = allServer.filter((it: any) => (it.usuario_id && it.usuario_id === uid) || (it.usuario && it.usuario.id === uid));
+            } else {
+              const sid = getSessionId();
+              serverItems = allServer.filter((it: any) => it.sessionId === sid || it.session_id === sid);
+            }
+            // map server items to local cart shape
+            const mapped = serverItems.map((it: any) => ({
+              id: it.id,
+              productoId: it.producto?.id || it.producto_id || it.productoId || it.productoId || null,
+              nombre: it.nombre || it.producto?.nombre,
+              imagen: it.imagen || it.producto?.imagen,
+              precio: it.precio || it.producto?.precio,
+              qty: it.cantidad || it.qty
+            }));
+            localStorage.setItem('cart', JSON.stringify(mapped));
+            try { window.dispatchEvent(new Event('cartUpdated')); } catch (e) {}
+          } catch (e) {
+            // fallback: try to update the single item id locally
+            if (created && created.id) {
+              try {
+                const raw = localStorage.getItem('cart') || '[]';
+                const localCart = JSON.parse(raw);
+                const idx = localCart.findIndex((c: any) => c.id === item.id);
+                if (idx >= 0) {
+                  localCart[idx].id = created.id;
+                  localStorage.setItem('cart', JSON.stringify(localCart));
+                  try { window.dispatchEvent(new Event('cartUpdated')); } catch (e) {}
+                }
+              } catch (e) {}
+            }
           }
         }
+        
       } catch (err) {
         console.warn('No se pudo sincronizar carrito:', err);
       }
