@@ -4,6 +4,7 @@ import "../../styles/inicioSesion.css";
 import { useState } from "react";
 import Image from "next/image";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { fetchJSON } from '../lib/api'
 
 export default function InicioSesion() {
   const [email, setEmail] = useState("");
@@ -15,12 +16,7 @@ export default function InicioSesion() {
     // call backend to get users and match credentials
     (async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8080/api/v1'}/usuarios`);
-        if (!res.ok) {
-          alert('Error al solicitar usuarios');
-          return;
-        }
-        const list = await res.json();
+        const list = await fetchJSON('/usuarios');
         const usuarioEncontrado = list.find((u: any) => u.email === email);
         if (!usuarioEncontrado) {
           alert('El correo no está registrado');

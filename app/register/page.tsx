@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { fetchJSON } from '../lib/api'
 
 export default function RegistroUsuario() {
 
@@ -51,26 +52,17 @@ export default function RegistroUsuario() {
     (async () => {
       try {
         const payload = { nombre, email, password: contrasena, telefono, region, comuna };
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8080/api/v1'}/usuarios`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) {
-          const t = await res.text();
-          alert(t || 'Error registrando usuario');
-          return;
-        }
-        const created = await res.json();
+        const created = await fetchJSON('/usuarios', { method: 'POST', body: JSON.stringify(payload) });
         // store user locally for compatibility and redirect to login
-        localStorage.setItem('usuarioLogueado', JSON.stringify(created));
+        try { localStorage.setItem('usuarioLogueado', JSON.stringify(created)); } catch(e) {}
         alert('Registro exitoso');
         // reset
         setNombre(''); setEmail(''); setContrasena(''); setConfirmacion(''); setTelefono(''); setRegion(''); setComuna(''); setComunasDisponibles([]);
         window.location.href = '/login';
-      } catch (e) {
+      } catch (e:any) {
         console.error(e);
-        alert('Error conectando al servidor');
+        // fetchJSON throws with server text when !ok; show a friendly message
+        alert(e?.message || 'Error conectando al servidor');
       }
     })();
   };
