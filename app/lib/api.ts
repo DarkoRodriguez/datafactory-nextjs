@@ -1,4 +1,4 @@
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://datafactory-api.up.railway.app/api/v1';
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://datafactoryapirest-production.up.railway.app/api/v1';
 
 export async function fetchJSON(path: string, opts: RequestInit = {}) {
   const url = `${API_BASE}${path}`;

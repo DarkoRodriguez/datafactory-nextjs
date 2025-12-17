@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { fetchJSON, getSessionId } from '../lib/api'
+import CheckoutWeather from '../components/CheckoutWeather'
 
 type CartItem = {
   id: number
@@ -95,7 +96,7 @@ export default function CheckoutPage() {
 
   // Estado de la compra: null | 'success' | 'fail'
   const [estadoCompra, setEstadoCompra] = useState<null | 'success' | 'fail'>(null);
-  const [orderId] = useState(() => Math.floor(20240000 + Math.random() * 1000));
+  const [orderId, setOrderId] = useState<number | null>(null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -131,6 +132,7 @@ export default function CheckoutPage() {
           indicaciones
         };
         const createdOrder = await fetchJSON('/orden', { method: 'POST', body: JSON.stringify(orderPayload) });
+        try { if (createdOrder && createdOrder.id) setOrderId(createdOrder.id); } catch(e) {}
         // create order items
         for (const it of cart) {
           const productoId = it.productoId || (it as any).producto?.id || (it as any).producto_id || it.id;
@@ -201,8 +203,8 @@ export default function CheckoutPage() {
               <span style={{ fontSize: 28, color: '#c62828', marginRight: 12 }}>❌</span>
             )}
             <div>
-              <h2 style={{ margin: 0, fontWeight: 600, fontSize: 22 }}>
-                {esExitosa ? 'Se ha realizado la compra.' : 'No se pudo realizar el pago.'} nro #{orderId}
+                <h2 style={{ margin: 0, fontWeight: 600, fontSize: 22 }}>
+                {esExitosa ? 'Se ha realizado la compra.' : 'No se pudo realizar el pago.'} nro #{orderId ?? '—'}
               </h2>
               <div style={{ color: '#888', fontSize: 14, marginTop: 2 }}>Código orden: ORDER12345</div>
             </div>
@@ -272,6 +274,8 @@ export default function CheckoutPage() {
             <div style={{ textAlign: 'right', marginTop: 8 }}>
               <strong>Total pagado: {formatCurrency(total)}</strong>
             </div>
+            {/* Weather / delivery availability for this order */}
+            {orderId ? <CheckoutWeather orderId={orderId} /> : null}
           </div>
           {esExitosa ? (
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
